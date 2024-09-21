@@ -100,6 +100,7 @@ class User(AbstractUser):
         ordering = ('email',)
 
 
+
 class Shop(models.Model):
     objects = models.manager.Manager()
     name = models.CharField(max_length=50, verbose_name='Название')
@@ -109,7 +110,8 @@ class Shop(models.Model):
                                 on_delete=models.CASCADE)
     state = models.BooleanField(verbose_name='статус получения заказов', default=True)
 
-    # filename
+    # filename = models.CharField(max_length=50, verbose_name='Имя файла', null=True, blank=True)
+    # file = models.FileField(verbose_name='Файл', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Магазин'
@@ -118,6 +120,11 @@ class Shop(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def display_categories(self):
+        return ', '.join([category.name for category in self.categories.all()[:3]])
+
+    display_categories.short_description = 'Категории'
 
 
 class Category(models.Model):
@@ -168,6 +175,9 @@ class ProductInfo(models.Model):
             models.UniqueConstraint(fields=['product', 'shop', 'external_id'], name='unique_product_info'),
         ]
 
+    def __str__(self):
+        return self.product.name
+
 
 class Parameter(models.Model):
     objects = models.manager.Manager()
@@ -197,6 +207,9 @@ class ProductParameter(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['product_info', 'parameter'], name='unique_product_parameter'),
         ]
+
+    def __str__(self):
+        return f'{self.product_info} {self.parameter} {self.value}'
 
 
 class Contact(models.Model):
@@ -261,6 +274,9 @@ class OrderItem(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['order_id', 'product_info'], name='unique_order_item'),
         ]
+
+    def __str__(self):
+        return f'{self.order} {self.product_info} {self.quantity}'
 
 
 class ConfirmEmailToken(models.Model):
