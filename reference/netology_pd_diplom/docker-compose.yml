@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  db:
+    image: sqlite3
+    volumes:
+      - ./db.sqlite3:/db.sqlite3
+    command: ["sqlite3", "/db.sqlite3"]
+
+  redis:
+    image: redis:7.0.0-alpine3.15
+    ports:
+      - "6379:6379"
+    networks:
+      dev_network:
+        aliases:
+          - db-redis
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+      - redis
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    command: celery -A netology_pd_diplom worker -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+    depends_on:
+      - web
+      - celery

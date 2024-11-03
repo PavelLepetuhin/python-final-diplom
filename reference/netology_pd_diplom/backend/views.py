@@ -15,6 +15,10 @@ from rest_framework.views import APIView
 from ujson import loads as load_json
 from yaml import load as load_yaml, Loader
 
+from django.contrib import admin
+from django.http import HttpResponseRedirect
+from .tasks import do_import
+
 from backend.models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Order, OrderItem, \
     Contact, ConfirmEmailToken
 from backend.serializers import UserSerializer, CategorySerializer, ShopSerializer, ProductInfoSerializer, \
@@ -736,3 +740,19 @@ class OrderView(APIView):
                         return JsonResponse({'Status': True})
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+
+class ImportDataAdmin(admin.ModelAdmin):
+    list_display = ('__str__',)
+
+    def import_data(self, request, queryset):
+        url = request.POST.get('url')  # получаем url из формы
+        do_import.delay(url)
+        self.message_user(request, "Import task started")
+        return HttpResponseRedirect(request.get_full_path())
+
+    import_data.short_description = "Import data from URL"
+
+    actions = ['import_data']
+
+admin.site.register(Shop, ImportDataAdmin)
