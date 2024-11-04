@@ -4,7 +4,7 @@ from .models import Product, ProductInfo, Parameter, ProductParameter, Shop, Cat
 import yaml
 from urllib.request import urlopen
 
-from ..netology_pd_diplom.celery import app
+app = Celery('tasks', broker='pyamqp://guest@localhost//')
 
 
 @app.task

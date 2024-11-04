@@ -4,6 +4,10 @@ from django.contrib.auth.admin import UserAdmin
 from backend.models import User, Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Order, OrderItem, \
     Contact, ConfirmEmailToken
 
+from django.contrib import admin
+from django.http import HttpResponseRedirect
+from .tasks import do_import
+
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
@@ -25,17 +29,18 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('first_name', 'last_name', 'email')
     ordering = ('date_joined',)
 
-@admin.register(Shop)
-class ShopAdmin(admin.ModelAdmin):
-    """
-    Панель управления магазинами
-    """
-    fieldsets = (
-        (None, {'fields': ('name', 'user','url', 'state',)}),
-    )
-    list_display = ('name', 'state', 'display_categories')
-    list_filter = ('state', 'categories')
-    search_fields = ('name',)
+
+# @admin.register(Shop)
+# class ShopAdmin(admin.ModelAdmin):
+#     """
+#     Панель управления магазинами
+#     """
+#     fieldsets = (
+#         (None, {'fields': ('name', 'user', 'url', 'state',)}),
+#     )
+#     list_display = ('name', 'state', 'display_categories')
+#     list_filter = ('state', 'categories')
+#     search_fields = ('name',)
 
 
 @admin.register(Category)
@@ -144,3 +149,26 @@ class ContactAdmin(admin.ModelAdmin):
 @admin.register(ConfirmEmailToken)
 class ConfirmEmailTokenAdmin(admin.ModelAdmin):
     list_display = ('user', 'key', 'created_at',)
+
+
+class ImportDataAdmin(admin.ModelAdmin):
+    # list_display = ('__str__',)
+    fieldsets = (
+        (None, {'fields': ('name', 'user', 'url', 'state',)}),
+    )
+    list_display = ('name', 'state', 'display_categories')
+    list_filter = ('state', 'categories')
+    search_fields = ('name',)
+
+    def import_data(self, request, queryset):
+        url = request.POST.get('url')  # получаем url из формы
+        do_import.delay(url)
+        self.message_user(request, "Import task started")
+        return HttpResponseRedirect(request.get_full_path())
+
+    import_data.short_description = "Import data from URL"
+
+    actions = ['import_data']
+
+
+admin.site.register(Shop, ImportDataAdmin)

@@ -1,20 +1,12 @@
-version: '3.9'
+version: '4.29.0'
 
 services:
-  db:
-    image: sqlite3
-    volumes:
-      - ./db.sqlite3:/db.sqlite3
-    command: ["sqlite3", "/db.sqlite3"]
 
   redis:
     image: redis:7.0.0-alpine3.15
     ports:
       - "6379:6379"
-    networks:
-      dev_network:
-        aliases:
-          - db-redis
+
 
   web:
     build:
@@ -26,7 +18,6 @@ services:
     ports:
       - 8000:8000
     depends_on:
-      - db
       - redis
 
   celery:
@@ -37,13 +28,12 @@ services:
     volumes:
       - .:/code
     depends_on:
-      - db
       - redis
 
-  nginx:
-    image: nginx
-    ports:
-      - 80:80
-    depends_on:
-      - web
-      - celery
+#  nginx:
+#    image: nginx
+#    ports:
+#      - 80:80
+#    depends_on:
+#      - web
+#      - celery
