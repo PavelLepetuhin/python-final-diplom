@@ -4,11 +4,16 @@ from .models import Product, ProductInfo, Parameter, ProductParameter, Shop, Cat
 import yaml
 from urllib.request import urlopen
 
+import logging
+
+logger = logging.getLogger('celery')
+
 app = Celery('tasks', broker='pyamqp://guest@localhost//')
 
 
 @app.task
 def send_email(subject, message, recipient_list):
+    logger.debug('send_email')
     """
     A Celery task for sending emails.
 
@@ -20,9 +25,12 @@ def send_email(subject, message, recipient_list):
     email = EmailMessage(subject, message, to=recipient_list)
     email.send()
 
+    logger.debug('send_email done')
+
 
 @app.task
 def do_import(url):
+    logger.debug('do_import')
     """
     A Celery task for importing data from a specified URL.
 
@@ -53,3 +61,5 @@ def do_import(url):
             ProductParameter.objects.create(product_info_id=product_info.id,
                                             parameter_id=parameter_object.id,
                                             value=value)
+
+    logger.debug('do_import done')

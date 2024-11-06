@@ -8,6 +8,10 @@ from django.contrib import admin
 from django.http import HttpResponseRedirect
 from .tasks import do_import
 
+import logging
+
+logger = logging.getLogger('django')
+
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
@@ -152,6 +156,7 @@ class ConfirmEmailTokenAdmin(admin.ModelAdmin):
 
 
 class ImportDataAdmin(admin.ModelAdmin):
+    logger.debug("ImportDataAdmin")
     # list_display = ('__str__',)
     fieldsets = (
         (None, {'fields': ('name', 'user', 'url', 'state',)}),
@@ -164,6 +169,7 @@ class ImportDataAdmin(admin.ModelAdmin):
         url = request.POST.get('url')  # получаем url из формы
         do_import.delay(url)
         self.message_user(request, "Import task started")
+        logger.debug("ImportDataAdmin: import_data")
         return HttpResponseRedirect(request.get_full_path())
 
     import_data.short_description = "Import data from URL"

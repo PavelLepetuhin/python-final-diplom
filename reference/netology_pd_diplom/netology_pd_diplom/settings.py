@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 
+from netology_pd_diplom.logging_formatters import CustomJsonFormatter
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -155,3 +157,48 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'main_format': {
+            'format': "{asctime} - {levelname} {levelno}- {module} - {filename} - {message}",
+            'style': "{",
+        },
+        'json_formatter': {
+            '()': CustomJsonFormatter,
+        }
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'main_format',
+        },
+        'django_file': {
+            'class': 'logging.FileHandler',
+            'filename': 'django_info.log',
+            'formatter': 'json_formatter',
+        },
+        'celery_file': {
+            'class': 'logging.FileHandler',
+            'filename': 'celery_info.log',
+            'formatter': 'json_formatter',
+        },
+    },
+
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'django_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'celery': {
+            'handlers': ['console', 'celery_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
